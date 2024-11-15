@@ -1,0 +1,13 @@
+{
+  "name": "アクセシビリティ ツールチェッカー",
+  "version": "1.0.0",
+  "manifest_version": 3,
+  "description": "2024/11/15",
+  "content_scripts": [
+    {
+      "matches": ["https://*/*"],
+      "js": ["main.js"]
+    }
+  ],
+  "host_permissions": ["https://api.openai.com/"]
+}
