@@ -36,3 +36,5 @@ pip install openai bottle beautifulsoup4 markdown
 ```
 python app.py
 ```
+
+拡張機能がオンになっている場合左下にアクセシビリティチェック開始ボタンが表示されますので、クリックすることでチェックが実行され、モーダルが表示されます。
