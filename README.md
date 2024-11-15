@@ -21,7 +21,13 @@ pip install openai bottle beautifulsoup4 markdown
 
 ### 3. API キー設定
 
-`utils\image_recognition.py]` と `app.py` にある `[GPT_API_KEI]` の部分を自分の OpenAI API キーに置き換えてください。
+`utils\image_recognition.py` と `app.py` にある `[GPT_API_KEI]` の部分を自分の OpenAI API キーに置き換えてください。
+
+### 4. Google の拡張機能として、Chrome にインポート
+
+1. [Chrome のメニュー](chrome://extensions/)から 拡張機能 を選択します。
+2. ページ右上で デベロッパーモード を有効にします。
+3. パッケージ化されていない拡張機能を読み込む をクリックし、プロジェクトのフォルダを選択します。
 
 ## 起動方法
 
