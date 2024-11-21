@@ -188,7 +188,7 @@ const showModal = (content) => {
   modalContent.className = "custom-modal";
   modalContent.innerHTML = `
     <div>${content}</div>
-    <button id="closeModal">閉じる</button>
+    <button id="closeModal" aria-label="モーダルを閉じる">閉じる</button>
   `;
   shadowRoot.appendChild(modalContent);
 
@@ -205,6 +205,11 @@ const showModal = (content) => {
 function createButton() {
   const button = document.createElement("button");
   button.textContent = "アクセシビリティチェック開始";
+
+  // ARIA属性を追加
+  button.setAttribute("role", "button");
+  button.setAttribute("aria-label", "アクセシビリティチェックを開始するボタン");
+  button.setAttribute("aria-pressed", "false");
 
   // スタイル設定
   button.style.position = "fixed";
