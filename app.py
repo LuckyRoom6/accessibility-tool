@@ -45,7 +45,11 @@ def index():
         else:
             for src in image_sources:
                 description = generate_image_description(src)
-                image_descriptions.append({'src': src, 'description': description})
+                image_descriptions.append({
+                    'src': src, 
+                    'description': description['description'],
+                    'alt': description['alt']
+                })
             alt_message = None
 
         response.content_type = 'application/json'
@@ -55,9 +59,6 @@ def index():
             'images_without_alt': image_descriptions,
             'alt_message': alt_message
         }, ensure_ascii=False)
-    except openai.error.APIConnectionError as e:
-        response.status = 500
-        return json.dumps({'error': 'API connection error', 'details': str(e)})
     except Exception as e:
         response.status = 500
         return json.dumps({'error': 'Internal server error', 'details': str(e)})
@@ -75,44 +76,65 @@ def message(role, text):
     return {'role': role, 'content': text}
 
 system = message('system', """
-以下はあるウェブページのHTML、JavaScript、およびCSSの内容です。
+                 あなたはウェブアクセシビリティの専門家として、提供されたHTMLコードを分析し、具体的なコード修正を提案します。
+ウェブページのアクセシビリティ評価: JIS X 8341-3:2016 (WCAG 2.2) 準拠
+提供されたウェブページのHTML、JavaScript、およびCSSコンテンツを、以下の観点から詳細に分析してください。各達成基準について、具体的な問題点と実践的な改善提案を提示してください。
+
+### 詳細な評価観点:
+   1.3.1 情報及び関係性 (レベルA):
+   - 視覚的な書式や構造が、支援技術でも正確に解釈可能かを分析
+   - フォーム要素とラベルの関連性
+   - データテーブルのマークアップと構造
+   - セマンティックなHTML要素の適切な使用
+
+    1.3.2 意味のある順序 (レベルA):
+   - コンテンツの論理的な読み取り順序を検証
+   - CSSによるレイアウト変更が、意味の伝達に影響しないかを確認
+
+    3. 理解可能性 (Understandable)
+   3.1.1 ページの言語 (レベルA):
+   - HTML言語属性の正確な設定
+   - ページの主要言語が明確に宣言されているか
+                
+4. 堅牢性 (Robust)
+   4.1.1 構文解析 (レベルA):
+   - HTMLの妥当性
+   - 重複するID
+   - 開始タグと終了タグの整合性
+
 
 ### HTMLコンテンツ
 {HTML_CONTENT}
 
-### JavaScriptコンテンツ
-{JS_CONTENT}
-
 ### CSSコンテンツ
 {CSS_CONTENT}
 
-この内容をもとに、**WCAG 2.2ガイドライン**に基づく詳細なアクセシビリティ評価を実施してください。  
-評価結果では、各ガイドラインの該当基準に基づいて見つかった問題点を該当箇所のコードなどを抜き出し具体的に指摘し、改善提案も併記してください。  
+## 応答フォーマット:
+1. 発見された問題
+   場所: [問題のある箇所のコード]
+   問題点: [具体的な説明]
+   修正案: [具体的なコード]
+   
+2. WCAG達成基準
+   - 違反している基準: [具体的な基準番号]
+   - 重要度: [高/中/低]
 
-特に以下の観点で評価を行い、各観点ごとに例を挙げて詳細に指摘してください：  
-1. **情報及び関係性**  
-   - 提示されている情報、構造、及び関係性がプログラムによる解釈が可能であるか。  
-   - 構造が適切にセマンティックなHTMLタグで表現されているかを確認し、不足があれば改善案を提示してください。
+3. コード修正
+   ```html
+   # 修正前
+   [問題のあるコード]
+   
+   # 修正後
+   [修正したコード]
+   ```
 
-2. **感覚的な特徴**  
-   - 操作や内容理解が形、大きさ、位置、色などの感覚的特徴に依存していないかを確認し、依存がある場合は補足説明や代替手段の提案を行ってください。
+4. 影響範囲
+   - 影響を受けるユーザー: [具体的なユーザー層]
+   - 支援技術への影響: [具体的な影響]
 
-3. **見出し及びラベル（AA）**  
-   - ページ内の見出しやラベルが適切に構造化されているか確認し、必要であれば改善案を提案してください。  
-
-4. **ページタイトル**  
-   - ウェブページに主題や目的を説明した適切なタイトルがあるかを確認し、不足している場合は改善案を提示してください。
-
-5. **リンクの目的（コンテキスト内）**  
-   - リンクテキストが意味不明、または複数リンクが同一のテキストで曖昧な役割を持っている場合に、それらの修正案を提示してください。
-
-**最終成果物**として、以下を提供してください：
-1. 各達成基準ごとの指摘事項。
-2. 該当箇所のコード（HTML/JS/CSS）抜粋。
-3. 各指摘事項に対する具体的な改善案。
-4. その他、アクセシビリティ向上のために必要と思われる追加の提案。
-
-上記内容に基づき、WCAG 2.2の各達成基準を網羅したレポートと改善提案を作成してください。
+入力されたコードに対して、上記の形式で具体的な問題点と修正案を提示してください。
+例示的な提案ではなく、実際のコードに基づいた具体的な修正を提供してください。
+複数ある場合は複数お願いします。また修正する箇所がない場合はそのように書いてください。
 """)
 
 def gpt(text):
@@ -147,14 +169,16 @@ def extract_images_without_alt(html_content):
 # GPTを使って画像の説明文を取得する関数
 def generate_image_description(image_url):
     openai.api_key = api_key
-    prompt = f"以下の画像URLの内容を説明してください.さらにこの画像のAltタグを簡潔で分かりやすく生成してください: {image_url}"
-    response = openai.ChatCompletion.create(
+    
+    # 画像の詳細な説明を生成
+    description_prompt = f"以下の画像URLの内容を説明してください: {image_url}"
+    description_response = openai.ChatCompletion.create(
         model='gpt-4o-mini',
         messages=[
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": prompt},
+                    {"type": "text", "text": description_prompt},
                     {
                         "type": "image_url",
                         "image_url": {
@@ -164,9 +188,37 @@ def generate_image_description(image_url):
                 ],
             }
         ],
-        max_tokens=1200,
+        max_tokens=250,  # 詳細な説明用のトークン数
     )
-    return response.choices[0].message.content
+    detailed_description = description_response.choices[0].message.content
+
+    # Alt タグの簡潔な説明を生成
+    alt_prompt = f"以下の画像URLのAltタグを簡潔で分かりやすく生成してください: {image_url}"
+    alt_response = openai.ChatCompletion.create(
+        model='gpt-4o-mini',
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": alt_prompt},
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": image_url
+                        },
+                    },
+                ],
+            }
+        ],
+        max_tokens=50,  # Alt タグは簡潔に
+    )
+    alt_text = alt_response.choices[0].message.content
+
+    return {
+        'description': detailed_description,
+        'alt': alt_text
+    }
+
 
 # run localhost
 try:

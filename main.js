@@ -173,9 +173,9 @@ const showModal = (content) => {
     }
     .custom-modal li {
       list-style: disc;
-      font-size: 12px;
+      font-size: 14px;
       color: #000;
-      margin: 0 25px;
+      margin: 10px 25px;
     }
     .custom-modal, .custom-modal * {
       font-family: 'Noto Sans JP', 'Hiragino Sans', sans-serif;
@@ -205,12 +205,10 @@ const showModal = (content) => {
 function createButton() {
   const button = document.createElement("button");
   button.textContent = "アクセシビリティチェック開始";
-
   // ARIA属性を追加
   button.setAttribute("role", "button");
   button.setAttribute("aria-label", "アクセシビリティチェックを開始するボタン");
   button.setAttribute("aria-pressed", "false");
-
   // スタイル設定
   button.style.position = "fixed";
   button.style.bottom = "10px";
@@ -287,12 +285,20 @@ button.addEventListener("click", async () => {
       <div>${ret.description}</div>
       <h3>ARIAタグの提案</h3>
       <ul>
-        ${ret.aria_tags
-          .map(
-            (tag) =>
-              `<li>${tag.suggested_aria_tag}</li><br><li>${tag.info}</li>`
-          )
-          .join("")}
+      ${ret.aria_tags
+        .map(
+          (tag) =>
+            `<li>
+              <strong>要素タイプ:</strong> ${tag.element}<br>
+              <strong>提案:</strong> ${tag.suggested_aria_tag}<br>
+              <strong>説明:</strong> ${tag.info}<br>
+              <strong>該当箇所のコード:</strong>
+              <code>${tag.html_snippet
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")}</code>
+            </li>`
+        )
+        .join("")}
       </ul>
       <h3>Altタグがない画像</h3>
       ${ret.alt_message ? `<p>${ret.alt_message}</p>` : ""}
@@ -302,7 +308,8 @@ button.addEventListener("click", async () => {
             (img) =>
               `<li>
                 <strong>画像:</strong><br><img src="${img.src}" alt="${img.description}" style="max-width: 40%; height: auto;" /><br>
-                <strong>Altタグの提案:</strong> ${img.description}
+                <strong>画像の説明:</strong> ${img.description}<br>
+                <strong>Altタグの提案: ${img.alt}</strong>
               </li>`
           )
           .join("")}
