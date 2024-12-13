@@ -29,6 +29,7 @@ const postHTML = async () => {
     stylesContent += `External stylesheet source: ${link.href}\n`;
   });
 
+  const baseUrl = window.location.origin;
   // ローカルホストにPOSTリクエストを送信
   const res = await fetch("http://localhost:8000/", {
     method: "POST",
@@ -40,6 +41,7 @@ const postHTML = async () => {
       page: document.querySelector("html").innerHTML,
       scripts: scriptsContent,
       styles: stylesContent,
+      baseUrl: baseUrl,
     }),
   });
 
@@ -61,17 +63,18 @@ const showModal = (content) => {
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      z-index: 100000;
+      z-index: 1000;
       background-color: white;
-      padding: 20px;
-      max-height: 80%;
+      padding: 30px 40px;
+      max-height: 80vh;
       width: 80%;
       overflow-y: auto;
-      font-family: 'Noto Sans JP', 'Hiragino Sans';
+      font-family: 'Noto Sans JP', 'Hiragino Sans', sans-serif;
       line-height: 1.5;
-      border-radius: 1.0rem;
+      border-radius: 1rem;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
     }
+
     .custom-modal button {
       display: block;
       margin: 20px auto 0;
@@ -80,59 +83,60 @@ const showModal = (content) => {
       color: white;
       border: none;
       cursor: pointer;
-      border-radius: 1.0rem;
-      box-shadow: 0 10px 15px -3px #0000001a, 0 4px 6px -4px #0000001a;
+      border-radius: 1rem;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
     }
+
     .custom-modal button:hover {
       background-color: #0056b3;
     }
+
     .custom-modal .modal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-bottom: 20px;
     }
+
     .custom-modal .modal-header h2 {
       margin: 0;
     }
-    .custom-modal .modal-content {
-      margin-top: 20px;
-    }
+
     .custom-modal .close-button {
       cursor: pointer;
       font-size: 24px;
+      background: none;
+      border: none;
+      color: #666;
     }
-    .custom-modal h1,
-    .custom-modal h2,
-    .custom-modal h3,
-    .custom-modal h4,
-    .custom-modal h5,
-    .custom-modal h6 {
-      margin: 5px;
-    }
+
     .custom-modal h1 {
       font-size: 20px;
       font-weight: 700;
+      margin: 5px 0;
     }
+
     .custom-modal h2 {
       font-size: 17px;
       font-weight: 600;
       position: relative;
       display: inline-block;
-      font-weight:bold;
       background: linear-gradient(transparent 50%, yellow 50%);
-      margin: 0 auto 20px;
-      padding: 0 10px 0 10px;
+      padding: 0 10px;
+      margin: 0 0 20px;
     }
+
     .custom-modal h3 {
       font-size: 16px;
       font-weight: 600;
       position: relative;
       display: inline-block;
-      font-weight: bold;
       background: linear-gradient(transparent 50%, rgba(0, 123, 255, 0.5) 50%);
-      margin: 0 auto 20px;
-      padding: 0 10px 0 10px;
+      padding: 0 10px;
+      margin: 0 0 20px;
     }
+
     .custom-modal h4 {
       font-size: 16px;
       font-weight: 700;
@@ -141,17 +145,22 @@ const showModal = (content) => {
       padding: 15px;
       line-height: 1.3;
     }
-    .custom-modal h5 {
-      font-size: 1em;
-    }
-    .custom-modal p {
-      font-size: 12px;
+
+    .custom-modal p, 
+    .custom-modal li {
+      font-size: 14px;
       color: #000;
     }
+
     .custom-modal ul {
-      list-style: disc;
+      list-style-type: disc;
       padding-left: 20px;
     }
+
+    .custom-modal li {
+      margin: 10px 0;
+    }
+
     .custom-modal code {
       display: block;
       background-color: #f4f4f4;
@@ -159,26 +168,49 @@ const showModal = (content) => {
       padding: 10px;
       margin: 15px 0;
       border-radius: 5px;
-      font-size: 13px;
+      font-size: 14px;
       color: #007bff;
       white-space: pre-wrap;
       font-family: 'Courier New', Courier, monospace;
       overflow-x: auto;
       max-width: 100%;
     }
+
     .custom-modal pre code {
       background: none;
       padding: 0;
       border: none;
     }
-    .custom-modal li {
-      list-style: disc;
-      font-size: 14px;
-      color: #000;
-      margin: 10px 25px;
+
+    .report pre code {
+      background-color: #333;
+      color: #00ff00;
+      padding: 10px;
+      margin: 15px 0;
+      border-radius: 5px;
+      white-space: pre-wrap;
+      font-family: 'Courier New', Courier, monospace;
+      overflow-x: auto;
+      max-width: 100%;
     }
-    .custom-modal, .custom-modal * {
-      font-family: 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+
+    .alt-suggest {
+      display: block;
+      background-color: #ffe6e9;
+      border-left: 4px solid #dc143c;
+      padding: 10px;
+      margin: 15px 0;
+      border-radius: 5px;
+      font-size: 13px;
+      white-space: pre-wrap;
+      font-family: 'Courier New', Courier, monospace;
+      overflow-x: auto;
+      max-width: 100%;
+    }
+
+    img {
+      max-width: 50%;
+      height: auto;
     }
   `;
   shadowRoot.appendChild(style);
@@ -281,8 +313,8 @@ button.addEventListener("click", async () => {
 
     // モーダルを表示
     showModal(`
-      <h2>アクセシビリティ評価</h2>
-      <div>${ret.description}</div>
+      <h1>アクセシビリティ評価</h1>
+      <div class="report">${ret.description}</div>
       <h3>ARIAタグの提案</h3>
       <ul>
       ${ret.aria_tags
@@ -309,7 +341,7 @@ button.addEventListener("click", async () => {
               `<li>
                 <strong>画像:</strong><br><img src="${img.src}" alt="${img.description}" style="max-width: 40%; height: auto;" /><br>
                 <strong>画像の説明:</strong> ${img.description}<br>
-                <strong>Altタグの提案: ${img.alt}</strong>
+                <p class="alt-suggest">Altタグの提案: ${img.alt}</p>
               </li>`
           )
           .join("")}
