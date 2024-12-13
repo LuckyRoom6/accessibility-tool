@@ -15,7 +15,9 @@ def generate_aria_tags_for_elements(html):
     interactive_elements = soup.find_all(['button', 'input'])
     for elem in interactive_elements:
         # ARIA属性やroleが設定されていない場合のみ抽出
-        if not any(attr in elem.attrs for attr in ['aria-label', 'aria-labelledby', 'role']):
+        # 以下の属性がない場合のみ提案を生成
+        aria_attributes = ['aria-label', 'aria-labelledby', 'aria-controls', 'aria-expanded', 'role']
+        if not any(attr in elem.attrs for attr in aria_attributes):
             element_info = convert_element_to_text(elem)
             suggested_role = 'role="button"' if elem.name == 'button' else 'role="textbox"'
             aria_tags.append({
