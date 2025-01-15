@@ -1,35 +1,73 @@
+// CSSの内容を取得する関数
+const fetchCSSContent = async (url) => {
+  try {
+    const response = await fetch(url);
+    if (!response.ok)
+      throw new Error(`Failed to fetch CSS: ${response.statusText}`);
+    return await response.text();
+  } catch (error) {
+    console.error(`Error fetching CSS from ${url}:`, error);
+    return "";
+  }
+};
+
+// すべてのCSSコンテンツを収集する関数
+const getAllCSSContent = async () => {
+  let stylesContent = "";
+
+  // インラインスタイルの取得
+  const styleTags = document.querySelectorAll("style");
+  styleTags.forEach((style) => {
+    stylesContent += `/* Inline Style */\n${style.innerHTML}\n`;
+  });
+
+  // 外部スタイルシートの取得
+  const linkTags = document.querySelectorAll("link[rel='stylesheet']");
+  const cssPromises = Array.from(linkTags).map(async (link) => {
+    const href = link.href;
+    if (href) {
+      try {
+        // Same-Origin Policyに違反しないURLのみ処理
+        const url = new URL(href);
+        if (url.origin === window.location.origin) {
+          const cssContent = await fetchCSSContent(href);
+          return `/* External Style: ${href} */\n${cssContent}\n`;
+        }
+        return `/* External stylesheet (not fetched due to CORS): ${href} */\n`;
+      } catch (error) {
+        console.error(`Error processing CSS from ${href}:`, error);
+        return "";
+      }
+    }
+    return "";
+  });
+
+  // すべてのCSSを結合
+  const cssContents = await Promise.all(cssPromises);
+  stylesContent += cssContents.join("\n");
+
+  return stylesContent;
+};
+
+// main.jsのpostHTML関数を修正
 const postHTML = async () => {
-  // 全てのスクリプトタグを取得
+  // スクリプトの取得（既存のコード）
   let scripts = document.querySelectorAll("script");
   let scriptsContent = "";
-
-  // 各スクリプトタグの内容を取得
   scripts.forEach((script) => {
     if (script.src) {
-      // 外部スクリプトの場合は、ソースURLを取得
       scriptsContent += `External script source: ${script.src}\n`;
     } else {
-      // インラインスクリプトの場合は、その内容を取得
       scriptsContent += `${script.innerHTML}\n`;
     }
   });
 
-  // 全てのスタイルタグとリンクタグ（スタイルシートを指しているもの）を取得
-  let styleTags = document.querySelectorAll("style");
-  let linkTags = document.querySelectorAll("link[rel='stylesheet']");
-  let stylesContent = "";
+  // CSSコンテンツの取得（新しい実装）
+  const stylesContent = await getAllCSSContent();
 
-  // インラインスタイルの内容を取得
-  styleTags.forEach((style) => {
-    stylesContent += `${style.innerHTML}\n`;
-  });
+  // 現在のページのベースURLを取得
+  const baseUrl = window.location.origin + window.location.pathname;
 
-  // 外部スタイルシートのリンクを取得
-  linkTags.forEach((link) => {
-    stylesContent += `External stylesheet source: ${link.href}\n`;
-  });
-
-  const baseUrl = window.location.origin;
   // ローカルホストにPOSTリクエストを送信
   const res = await fetch("http://localhost:8000/", {
     method: "POST",
@@ -37,11 +75,10 @@ const postHTML = async () => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      // 開いているページのHTML、スクリプト、スタイルを送信
       page: document.querySelector("html").innerHTML,
       scripts: scriptsContent,
       styles: stylesContent,
-      baseUrl: baseUrl,
+      url: baseUrl,
     }),
   });
 
@@ -140,13 +177,14 @@ const showModal = (content) => {
     .custom-modal h4 {
       font-size: 16px;
       font-weight: 700;
-      background-color: #eee;
-      color: #17194c;
-      padding: 15px;
       line-height: 1.3;
+      padding:0 .4em .2em;
+      border-bottom: 3px dashed #aad3f3;
+      background-color: #ffffff;
+      color: #000000;
     }
 
-    .custom-modal p, 
+    .custom-modal p,
     .custom-modal li {
       font-size: 14px;
       color: #000;
@@ -316,21 +354,26 @@ button.addEventListener("click", async () => {
       <h1>アクセシビリティ評価</h1>
       <div class="report">${ret.description}</div>
       <h3>ARIAタグの提案</h3>
-      <ul>
-      ${ret.aria_tags
-        .map(
-          (tag) =>
-            `<li>
-              <strong>要素タイプ:</strong> ${tag.element}<br>
-              <strong>提案:</strong> ${tag.suggested_aria_tag}<br>
-              <strong>説明:</strong> ${tag.info}<br>
-              <strong>該当箇所のコード:</strong>
-              <code>${tag.html_snippet
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")}</code>
-            </li>`
-        )
-        .join("")}
+      ${
+        ret.aria_message
+          ? `<p class="aria-all-tagged">${ret.aria_message}</p>`
+          : `<ul>
+          ${ret.aria_tags
+            .map(
+              (tag) =>
+                `<li>
+                  <strong>要素タイプ:</strong> ${tag.element}<br>
+                  <strong>提案:</strong> ${tag.suggested_aria_tag}<br>
+                  <strong>説明:</strong> ${tag.info}<br>
+                  <strong>該当箇所のコード:</strong>
+                  <code>${tag.html_snippet
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")}</code>
+                </li>`
+            )
+            .join("")}
+        </ul>`
+      }
       </ul>
       <h3>Altタグがない画像</h3>
       ${ret.alt_message ? `<p>${ret.alt_message}</p>` : ""}
